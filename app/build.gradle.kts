@@ -1,0 +1,100 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace = "com.apex.container"
+    compileSdk = 34
+    ndkVersion = "26.3.11579264"
+
+    defaultConfig {
+        applicationId = "com.apex.container"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0-apex"
+
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+                cFlags += listOf("-std=c11", "-Wall", "-Wextra", "-O2")
+                arguments += listOf("-DANDROID_STL=none")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            isDebuggable = true
+            isJniDebuggable = true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildFeatures {
+        compose = true
+        aidl = true
+        buildConfig = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Mandatory for Android 10+ (W^X): ensures libvroot.so and libsu_bin.so
+            // are extracted to nativeLibraryDir with r-x permissions so execve() succeeds.
+            useLegacyPackaging = true
+            pickFirsts += setOf("**/libvroot.so", "**/libsu_bin.so")
+        }
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+dependencies {
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+    implementation(composeBom)
+
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
+    implementation("androidx.activity:activity-compose:1.9.0")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // Shizuku API for UID 2000 / shell host bridge
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
+}
